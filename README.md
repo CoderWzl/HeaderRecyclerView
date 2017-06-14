@@ -26,7 +26,48 @@
 代理类的相同方法，在代理类的该方法中通过被代理类的实例调用方法，当然在被代理类的实例调用方法之前可以做一些控制，这是代理模式的意义所在。
 
 ---
+#### ListView源码浅析
+1，addView()方法和setAdapter()方法
+```java
+//存储头部View
+ArrayList<FixedViewInfo> mHeaderViewInfos = Lists.newArrayList();
+//存储尾部View
+ArrayList<FixedViewInfo> mFooterViewInfos = Lists.newArrayList();
 
+//addHeaderView()
+public void addHeaderView(View v, Object data, boolean isSelectable) {
+    ...
+    // Wrap the adapter if it wasn't already wrapped.
+    if (mAdapter != null) {
+        if (!(mAdapter instanceof HeaderViewListAdapter)) {
+            wrapHeaderListAdapterInternal();
+        }
+
+        // In the case of re-adding a header view, or adding one later on,
+        // we need to notify the observer.
+        if (mDataSetObserver != null) {
+            mDataSetObserver.onChanged();
+        }
+    }
+}
+
+//setAdapter
+@Override
+public void setAdapter(ListAdapter adapter) {
+    ...
+    if (mHeaderViewInfos.size() > 0|| mFooterViewInfos.size() > 0) {
+        mAdapter = wrapHeaderListAdapterInternal(mHeaderViewInfos, mFooterViewInfos, adapter);
+    } else {
+        mAdapter = adapter;
+    }
+    ...
+}
+
+ /** @hide */
+ protected void wrapHeaderListAdapterInternal() {
+     mAdapter = wrapHeaderListAdapterInternal(mHeaderViewInfos, mFooterViewInfos, mAdapter);
+ }
+```
 
 
 
