@@ -8,10 +8,9 @@
 * ListView源码浅析
     * addView()方法和setAdapter()方法
     * 代理模式在ListView中的应用
-    * 利用代理模式实现RecyclerView添加头尾部
-* kotlin
-    * 构造器学习
-    * init代码块
+* kotlin构造器学习
+    * 主构造函数
+    * 次构造函数
 ---
 #### 代理模式
 代理模式属于结构型模式（指通过代码结构实现解耦）设计模式大体分为以下三类<br>
@@ -148,12 +147,114 @@ public View getView(int position, View convertView, ViewGroup parent) {
 HeaderViewListAdapter实际就是一个代理在mAdapter对外提供功能时加以控制。
 
 ---
+#### kotlin
+>当Kotlin中的类需要构造函数时，可以有一个主构造函数和多个次构造函数，可以没有次构造函数。
 
+###### 主构造函数
+主构造函数在类名后。
+```kotlin
+class Person(name: String) {
 
+}
+```
+当主构造函数有注解或者可见性修饰符，需加 constructor 关键字。
+```kotlin
+class Person public @Inject constructor(name: String){
 
+}
+```
+主构造函数不能包含任何的代码。初始化的代码可以放到以 init 关键字作为前缀的初始化块中：
+```kotlin
+class Test(name: String){
 
+    init{
+        print(name)
+        ...
+    }
+}
+```
+当在主函数中声明变量后，可以当做全局变量使用
+```kotlin
+class Test(val name: String){
 
+    fun printName(){
+        print(name)
+        ...
+    }
+}
+```
+注：<br>
+1、函数的声明可以是val也可以是var<br>
+2、当不在主构造函数中声明又想当全局变量使用，可在类中声明，主函数中声明是简化了其写法。
+```kotlin
+class Test(val name: String){
 
+    val name: String = name
+
+    fun printName(){
+        print(name)
+        ...
+    }
+}
+```
+当不在主函数中声明时，只能在初始化块以及属性声明中使用
+###### 次构造函数
+```kotlin
+class Person {
+
+    constructor() {
+
+    }
+
+    constructor(name: String):this() {
+
+    }
+
+    constructor(name: String, age: Int) : this(name) {
+
+    }
+}
+
+class Person(){
+
+    constructor(name: String):this() {
+
+    }
+
+    constructor(name: String, age: Int) : this(name) {
+
+    }
+
+}
+```
+3、当没有主构造参数时，创建次构造函数
+```kotlin
+//正确使用：
+class Customer{
+
+    constructor(name: String) {
+
+    }
+
+    constructor(name: String, age: Int) : this(name) {
+
+    }
+
+}
+//错误使用：
+class Customer{
+    //没有主构造函数，使用委托this()错误
+    constructor(name: String) : this() {
+
+    }
+
+    constructor(name: String, age: Int) : this(name) {
+
+    }
+
+}
+
+```
 
 
 
