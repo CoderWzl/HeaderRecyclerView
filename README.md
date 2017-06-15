@@ -67,7 +67,89 @@ public void setAdapter(ListAdapter adapter) {
  protected void wrapHeaderListAdapterInternal() {
      mAdapter = wrapHeaderListAdapterInternal(mHeaderViewInfos, mFooterViewInfos, mAdapter);
  }
+
+/** @hide */
+protected HeaderViewListAdapter wrapHeaderListAdapterInternal(
+        ArrayList<ListView.FixedViewInfo> headerViewInfos,
+        ArrayList<ListView.FixedViewInfo> footerViewInfos,
+        ListAdapter adapter) {
+    return new HeaderViewListAdapter(headerViewInfos, footerViewInfos, adapter);
+}
 ```
+
+
+通过上面的源码可以看出无论是setAdapter还是addHeaderView,addFooterView都会新建一个HeaderViewListAdapter并且将头尾部信息和adapter传如其中。<br>
+这个HeaderViewListAdapter就是我们自己写的Adapter的代理。看HeaderViewListAdapter的源码
+```java
+public class HeaderViewListAdapter implements WrapperListAdapter, Filterable
+```
+类的声明继承了WrapperListAdapter（父类也是Adapter）主要看adapter中必须重写的几个重要方法
+###### getCount()
+```java
+public int getCount() {
+    if (mAdapter != null) {
+        return getFootersCount() + getHeadersCount() + mAdapter.getCount();
+    } else {
+        return getFootersCount() + getHeadersCount();
+    }
+}
+```
+这里获取的count是头尾部View加上我们自定义adapter中的count。
+###### getItem(int position)
+```java
+public Object getItem(int position) {
+    // Header (negative positions will throw an IndexOutOfBoundsException)
+    int numHeaders = getHeadersCount();
+    if (position < numHeaders) {
+        return mHeaderViewInfos.get(position).data;
+    }
+
+    // Adapter
+    final int adjPosition = position - numHeaders;
+    int adapterCount = 0;
+    if (mAdapter != null) {
+        adapterCount = mAdapter.getCount();
+        if (adjPosition < adapterCount) {
+            return mAdapter.getItem(adjPosition);
+        }
+    }
+
+    // Footer (off-limits positions will throw an IndexOutOfBoundsException)
+    return mFooterViewInfos.get(adjPosition - adapterCount).data;
+}
+```
+getItem的时候判断position是否小于headerView的列表大小，小于的话return mHeaderViewInfos.get(position).data;
+adjPosition < adapterCount 就return mAdapter.getItem(adjPosition);否则 return mFooterViewInfos.get(adjPosition - adapterCount).data;<br>
+###### getView()
+```java
+public View getView(int position, View convertView, ViewGroup parent) {
+    // Header (negative positions will throw an IndexOutOfBoundsException)
+    int numHeaders = getHeadersCount();
+    if (position < numHeaders) {
+        return mHeaderViewInfos.get(position).view;
+    }
+
+    // Adapter
+    final int adjPosition = position - numHeaders;
+    int adapterCount = 0;
+    if (mAdapter != null) {
+        adapterCount = mAdapter.getCount();
+        if (adjPosition < adapterCount) {
+            return mAdapter.getView(adjPosition, convertView, parent);
+        }
+    }
+
+    // Footer (off-limits positions will throw an IndexOutOfBoundsException)
+    return mFooterViewInfos.get(adjPosition - adapterCount).view;
+}
+```
+在getView()方法中根据position的位置返回头部的View，adapter中的view，尾部的view。<br>
+###### 总结：
+HeaderViewListAdapter实际就是一个代理在mAdapter对外提供功能时加以控制。
+
+---
+
+
 
 
 
